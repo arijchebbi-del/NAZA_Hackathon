@@ -7,16 +7,26 @@ Output: JSON-serializable dict with mode, ranking, gaps, per-parameter best/wors
 """
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, Iterable, List
 
 # Direction matters: a LONGER night or comm gap is WORSE, so "best" means the lowest value.
 # Unknown parameters default to "higher is better" and produce a warning.
-PARAMS: Dict[str, Dict[str, str]] = {
-    "sun_visible_pct":    {"label": "Sun visible (% of time)",         "better": "higher"},
-    "longest_night_h":    {"label": "Longest night (h)",               "better": "lower"},
-    "earth_visible_pct":  {"label": "Earth visible (% of time)",       "better": "higher"},
-    "longest_comm_gap_h": {"label": "Longest communication gap (h)",   "better": "lower"},
+PARAMS = {
+    "steepness_deg": {"label": "Slope (°)", "better": "lower"},
+    "sun_elevation_deg": {"label": "Sun elevation (°)", "better": "higher"},
+    "earth_elevation_deg": {"label": "Earth elevation (°)", "better": "higher"},
+    "p_no_collision": {"label": "P(no collision)", "better": "higher"},
 }
+
+
+def factors(p: Dict[str, float]) -> dict:
+    s1 = max(0.0, 1 - p["steepness_deg"] / 15)
+    s2 = max(0.0, p["sun_elevation_deg"]) / 90
+    s3 = max(0.0, p["earth_elevation_deg"]) / 90
+    s4 = p["p_no_collision"]
+    f = {"slope": s1, "sun": s2, "earth": s3, "collision": s4}
+    return {"factors": f, "product": s1 * s2 * s3 * s4, "limiting": min(f, key=f.get)}
 
 
 def _as_dict(r: Any) -> dict:
@@ -28,7 +38,11 @@ def _as_dict(r: Any) -> dict:
 
 
 def _is_num(x: Any) -> bool:
-    return isinstance(x, (int, float)) and not isinstance(x, bool)
+    return (
+        isinstance(x, (int, float))
+        and not isinstance(x, bool)
+        and (not isinstance(x, float) or math.isfinite(x))
+    )
 
 
 def _rank(regions: List[dict]) -> List[dict]:
@@ -67,16 +81,31 @@ def precompute(regions: Iterable[Any]) -> dict:
 
     warnings: List[str] = []
     clean = []
+    seen_names = set()
     for r in items:
         if not _is_num(r.get("score")):
             warnings.append(f"'{r.get('name')}' has no numeric score and was excluded from the ranking.")
             continue
+        name = r.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("Every scored region must have a non-empty string name.")
+        if name in seen_names:
+            raise ValueError(f"Region names must be unique; '{name}' appears more than once.")
+        seen_names.add(name)
         if not 0 <= r["score"] <= 100:
             warnings.append(f"Score of '{r['name']}' is {r['score']}, outside the expected 0-100 range.")
+        raw_parameters = r.get("parameters")
+        if raw_parameters is None:
+            raw_parameters = {}
+        if not isinstance(raw_parameters, dict):
+            raise ValueError(f"Parameters for '{name}' must be an object.")
+        invalid_parameters = sorted(k for k, v in raw_parameters.items() if not _is_num(v))
+        for key in invalid_parameters:
+            warnings.append(f"Parameter '{key}' for '{name}' is not numeric and was excluded.")
         clean.append({
-            "name": r["name"],
+            "name": name,
             "score": r["score"],
-            "parameters": {k: v for k, v in (r.get("parameters") or {}).items() if _is_num(v)},
+            "parameters": {k: v for k, v in raw_parameters.items() if _is_num(v)},
         })
 
     if not clean:
