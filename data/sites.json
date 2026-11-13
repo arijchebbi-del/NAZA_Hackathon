@@ -1,0 +1,7 @@
+{
+  "regions": [
+    {"id": "sample_site_a", "name": "Sample Site A", "type": "sample", "lat": null, "lon": null, "source": "FAKE test data"},
+    {"id": "sample_site_b", "name": "Sample Site B", "type": "sample", "lat": null, "lon": null, "source": "FAKE test data"},
+    {"id": "sample_site_c", "name": "Sample Site C", "type": "sample", "lat": null, "lon": null, "source": "FAKE test data"}
+  ]
+}

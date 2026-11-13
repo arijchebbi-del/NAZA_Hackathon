@@ -23,8 +23,8 @@ from openai import OpenAI
 
 from . import data_access
 from .precompute import precompute
-from .prompts import build_system
-from .tools import TOOLS, validate_action
+from .prompts import build_system_prompt
+from .tools import TOOLS, validate_tool_call
 
 MAX_TOKENS = int(os.getenv("CHAT_MAX_TOKENS", "1000"))
 TEMPERATURE = float(os.getenv("CHAT_TEMPERATURE", "0.2"))
@@ -139,7 +139,10 @@ def chat(
             computed = {"mode": None, "warnings": [str(e)]}
 
     messages = (
-        [{"role": "system", "content": build_system(level, (computed or {}).get("mode"))}]
+        [{"role": "system", "content": build_system_prompt(
+            mode=(computed or {}).get("mode") or "analyse_simple",
+            level=level,
+        )}]
         + _clean_history(history)
         + [{"role": "user", "content": _build_user_message(question, regions, computed, app_state)}]
     )
@@ -174,8 +177,10 @@ def chat(
             except json.JSONDecodeError:
                 rejected.append({"tool": tc.function.name, "reason": "Malformed arguments."})
                 continue
-            action, rejection = validate_action(tc.function.name, args)
-            (actions if action else rejected).append(action or rejection)
+            validation = validate_tool_call(tc.function.name, args)
+            (actions if validation.ok else rejected).append(
+                validation.to_action() if validation.ok else validation.to_dict()
+            )
 
         if rejected:
             note = "Some requested actions were not applied:\n" + "\n".join(f"- {r['reason']}" for r in rejected)

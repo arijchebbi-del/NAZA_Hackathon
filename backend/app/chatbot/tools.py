@@ -19,7 +19,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import date
 from typing import Any, Callable, Dict, List, Optional
 
-from data_access import RegionNotFound, get_region
+from .data_access import RegionNotFound, get_region
 
 # ---------------------------------------------------------------------------
 # Configuration (align these with the rest of the team)

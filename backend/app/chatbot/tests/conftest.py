@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # so `import chatbot` works
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # so `import chatbot` works
 
-import data_access
+from chatbot import data_access
 
 
 @pytest.fixture(autouse=True)
