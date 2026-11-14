@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Html, OrbitControls, PointerLockControls, Stars } from "@react-three/drei";
+import { Html, OrbitControls, PointerLockControls, Stars, useTexture } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import type { Site } from "../api";
@@ -10,59 +10,39 @@ interface GlobeSceneProps {
   sites: Site[];
   selectedSiteId: string | null;
   selectedDate: string;
+  time?: Date | number | string;
+  earthTextureUrls?: EarthTextureUrls;
   freeFlight: boolean;
   onSelect: (id: string) => void;
 }
 
-function seededNoise(seed: number): () => number {
-  let state = seed >>> 0;
-  return () => {
-    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
-    return state / 4294967296;
-  };
+interface EarthTextureUrls {
+  albedo: string;
+  normal: string;
+  specular: string;
 }
 
-function makeLunarTexture(): THREE.CanvasTexture {
-  const canvas = document.createElement("canvas");
-  canvas.width = 768;
-  canvas.height = 384;
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("Canvas is unavailable for the procedural lunar texture.");
-  const image = context.createImageData(canvas.width, canvas.height);
-  const noise = seededNoise(19460217);
-  for (let index = 0; index < image.data.length; index += 4) {
-    const value = 93 + Math.floor(noise() * 48);
-    image.data[index] = value;
-    image.data[index + 1] = value;
-    image.data[index + 2] = value + 2;
-    image.data[index + 3] = 255;
-  }
-  context.putImageData(image, 0, 0);
-  const craters = seededNoise(913704);
-  for (let index = 0; index < 280; index += 1) {
-    const x = craters() * canvas.width;
-    const y = craters() * canvas.height;
-    const radius = 2 + craters() * 20;
-    const shade = Math.floor(72 + craters() * 80);
-    const gradient = context.createRadialGradient(x, y, radius * 0.1, x, y, radius);
-    gradient.addColorStop(0, `rgba(${shade - 22},${shade - 22},${shade - 18},0.48)`);
-    gradient.addColorStop(0.7, `rgba(${shade},${shade},${shade + 3},0.3)`);
-    gradient.addColorStop(1, "rgba(35,38,42,0)");
-    context.fillStyle = gradient;
-    context.beginPath();
-    context.arc(x, y, radius, 0, Math.PI * 2);
-    context.fill();
-    context.strokeStyle = "rgba(29,31,34,0.28)";
-    context.lineWidth = Math.max(1, radius * 0.08);
-    context.beginPath();
-    context.arc(x, y, radius * 0.72, 0, Math.PI * 2);
-    context.stroke();
-  }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.anisotropy = 4;
-  return texture;
+function timeToEpochMs(time: Date | number | string | undefined, selectedDate: string): number {
+  const value = time ?? `${selectedDate}T12:00:00.000Z`;
+  const epochMs = value instanceof Date
+    ? value.getTime()
+    : typeof value === "number"
+      ? value
+      : Date.parse(value);
+  if (!Number.isFinite(epochMs)) throw new RangeError("GlobeScene time must be a valid date or timestamp.");
+  return epochMs;
+}
+
+function sunDirectionAt(epochMs: number): THREE.Vector3 {
+  const lunarMonthMs = 29.53059 * 86_400_000;
+  const newMoonEpochMs = Date.parse("2000-01-06T18:14:00.000Z");
+  const phase = ((epochMs - newMoonEpochMs) / lunarMonthMs) * Math.PI * 2;
+  const lunarObliquity = THREE.MathUtils.degToRad(1.54);
+  return new THREE.Vector3(
+    Math.cos(phase) * Math.cos(lunarObliquity),
+    Math.sin(phase) * Math.sin(lunarObliquity),
+    Math.sin(phase) * Math.cos(lunarObliquity),
+  ).normalize();
 }
 
 function sitePosition(site: Site, radius: number): THREE.Vector3 {
@@ -152,22 +132,42 @@ function Moon({
   const root = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
   const [hoveredSiteId, setHoveredSiteId] = useState<string | null>(null);
-  const texture = useMemo(() => makeLunarTexture(), []);
+  const textures = useTexture({
+    map: "/tex/moon_color.jpg",
+    normalMap: "/tex/moon_normal.png",
+    displacementMap: "/tex/moon_elevation.jpg",
+  });
+  useEffect(() => {
+    textures.map.colorSpace = THREE.SRGBColorSpace;
+    textures.map.anisotropy = 8;
+    textures.normalMap.colorSpace = THREE.NoColorSpace;
+    textures.displacementMap.colorSpace = THREE.NoColorSpace;
+  }, [textures]);
   useFrame((_, delta) => {
     if (!hovered && !hoveredSiteId && !selectedSiteId) rotationRef.current += delta * 0.008;
     if (root.current) root.current.rotation.y = rotationRef.current;
   });
-  useEffect(() => () => texture.dispose(), [texture]);
 
   return (
     <group ref={root}>
       <mesh
         ref={moon}
+        castShadow
+        receiveShadow
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <sphereGeometry args={[2.45, 80, 80]} />
-        <meshStandardMaterial map={texture} bumpMap={texture} bumpScale={0.075} roughness={1} metalness={0} />
+        <sphereGeometry args={[2.45, 256, 256]} />
+        <meshStandardMaterial
+          map={textures.map}
+          normalMap={textures.normalMap}
+          normalScale={[0.8, 0.8]}
+          displacementMap={textures.displacementMap}
+          displacementScale={0.014}
+          displacementBias={-0.007}
+          roughness={0.97}
+          metalness={0}
+        />
       </mesh>
       {sites.length > 50 ? (
         <InstancedSiteMarkers
@@ -238,24 +238,83 @@ function ExplorerBot({ position, label, delay }: { position: [number, number, nu
   );
 }
 
-function Earth({ date }: { date: string }) {
-  const day = Math.floor((Date.parse(`${date}T00:00:00Z`) - Date.parse("2026-01-01T00:00:00Z")) / 86_400_000);
-  const angle = 1.1 + day * 0.0048;
-  const position: [number, number, number] = [Math.cos(angle) * 10, 2.3 + Math.sin(angle * 0.65) * 0.35, Math.sin(angle) * 10];
+function MappedEarthMaterial({ urls }: { urls: EarthTextureUrls }) {
+  const textures = useTexture({
+    map: urls.albedo,
+    normalMap: urls.normal,
+    specularIntensityMap: urls.specular,
+  });
+  useEffect(() => {
+    textures.map.colorSpace = THREE.SRGBColorSpace;
+    textures.map.anisotropy = 8;
+    textures.normalMap.colorSpace = THREE.NoColorSpace;
+    textures.specularIntensityMap.colorSpace = THREE.NoColorSpace;
+  }, [textures]);
+
+  return (
+    <meshPhysicalMaterial
+      map={textures.map}
+      normalMap={textures.normalMap}
+      specularIntensityMap={textures.specularIntensityMap}
+      specularIntensity={0.65}
+      roughness={0.82}
+      metalness={0}
+    />
+  );
+}
+
+function Earth({ date, textureUrls }: { date: string; textureUrls?: EarthTextureUrls }) {
+  const day = Math.floor((Date.parse(`${date}T12:00:00Z`) - Date.parse("2026-01-01T00:00:00Z")) / 86_400_000);
+  const libration = Math.sin(day * 0.0366) * THREE.MathUtils.degToRad(7.9);
+  const position: [number, number, number] = [
+    Math.sin(libration) * 14,
+    0.15,
+    Math.cos(libration) * 14,
+  ];
   return (
     <group position={position}>
-      <mesh>
-        <sphereGeometry args={[0.48, 36, 36]} />
-        <meshStandardMaterial color="#3985b3" emissive="#0b2947" emissiveIntensity={0.55} roughness={0.85} />
+      <mesh receiveShadow>
+        <sphereGeometry args={[0.48, 64, 64]} />
+        {textureUrls
+          ? <MappedEarthMaterial urls={textureUrls} />
+          : <meshStandardMaterial color="#347ca3" roughness={0.82} metalness={0} />}
       </mesh>
       <mesh scale={1.04}>
-        <sphereGeometry args={[0.48, 36, 36]} />
+        <sphereGeometry args={[0.48, 64, 64]} />
         <meshBasicMaterial color="#82c7ef" transparent opacity={0.08} side={THREE.BackSide} />
       </mesh>
       <Html position={[0.5, 0.18, 0]} distanceFactor={15}>
         <span className="earth-tag">EARTH</span>
       </Html>
     </group>
+  );
+}
+
+function SunLight({ position }: { position: THREE.Vector3 }) {
+  const light = useRef<THREE.DirectionalLight>(null);
+  useEffect(() => {
+    if (!light.current) return;
+    const shadow = light.current.shadow;
+    shadow.mapSize.set(2048, 2048);
+    shadow.camera.left = -3.2;
+    shadow.camera.right = 3.2;
+    shadow.camera.top = 3.2;
+    shadow.camera.bottom = -3.2;
+    shadow.camera.near = 0.1;
+    shadow.camera.far = 50;
+    shadow.bias = -0.00005;
+    shadow.normalBias = 0.004;
+    shadow.camera.updateProjectionMatrix();
+  }, []);
+
+  return (
+    <directionalLight
+      ref={light}
+      position={position}
+      intensity={4}
+      color="#fff4df"
+      castShadow
+    />
   );
 }
 
@@ -274,7 +333,7 @@ function CameraFlight({ selectedSiteId, sites, rotationRef }: Pick<GlobeScenePro
     flight.current = {
       from: camera.position.clone(),
       to: nextPosition,
-      targetFrom: controls.current?.target.clone() ?? new THREE.Vector3(0, -2.05, 0),
+      targetFrom: controls.current?.target.clone() ?? new THREE.Vector3(0, -2.45, 0),
       targetTo: target,
       start: performance.now(),
     };
@@ -301,10 +360,10 @@ function CameraFlight({ selectedSiteId, sites, rotationRef }: Pick<GlobeScenePro
       makeDefault
       enableDamping
       dampingFactor={0.07}
-      minDistance={3.5}
-      maxDistance={13}
-      enablePan={false}
-      target={[0, -2.05, 0]}
+      minDistance={2.7}
+      maxDistance={14}
+      enablePan
+      target={[0, -2.35, 0]}
     />
   );
 }
@@ -343,20 +402,23 @@ function FreeFlight({ enabled }: { enabled: boolean }) {
 
 export default function GlobeScene(props: GlobeSceneProps) {
   const rotationRef = useRef(0);
+  const epochMs = timeToEpochMs(props.time, props.selectedDate);
+  const sunPosition = useMemo(() => sunDirectionAt(epochMs).multiplyScalar(40), [epochMs]);
   return (
     <Canvas
       className="globe-canvas"
       dpr={[1, 1.6]}
-      camera={{ position: [0, -2.2, 8.2], fov: 40 }}
+      shadows
+      camera={{ position: [0, -5.7, 0], fov: 40 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-      onCreated={({ camera }) => camera.lookAt(0, -2.05, 0)}
+      onCreated={({ camera }) => camera.lookAt(0, -2.35, 0)}
     >
       <color attach="background" args={["#090d10"]} />
-      <ambientLight intensity={0.22} />
-      <directionalLight position={[-6, 3, 5]} intensity={3.2} color="#ffe7bd" />
+      <ambientLight intensity={0.005} />
+      <SunLight position={sunPosition} />
       <Stars radius={85} depth={48} count={2400} factor={3} saturation={0.15} fade speed={0.16} />
       <Moon sites={props.sites} selectedSiteId={props.selectedSiteId} onSelect={props.onSelect} rotationRef={rotationRef} />
-      <Earth date={props.selectedDate} />
+      <Earth date={props.selectedDate} textureUrls={props.earthTextureUrls} />
       <ExplorerBot position={[-3.4, 0.4, 2.3]} label="PATHFINDER 07" delay={0.2} />
       <ExplorerBot position={[3.2, 2.1, -0.5]} label="SCOUT 02" delay={2.2} />
       <CameraFlight selectedSiteId={props.selectedSiteId} sites={props.sites} rotationRef={rotationRef} />
