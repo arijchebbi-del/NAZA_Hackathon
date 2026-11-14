@@ -1,7 +1,7 @@
 {
-  "planHash": "fcfbbf088ae0ea5e19a6589716e1f43807cedc2d56720536f53c84c2816429ad",
+  "planHash": "f7855c94d9821141e245d1d5faa349ce71c435cad903fb00bc52c170528315d9",
   "phase": "baseline",
-  "recordedAtUtc": "2026-11-14T14:37:32.6311503Z",
+  "recordedAtUtc": "2026-11-14T14:44:19.8909291Z",
   "retryCount": 0,
   "resetBaseline": true,
   "complete": true,
@@ -19,8 +19,8 @@
         "skipped": false,
         "skippedReason": null,
         "exitCode": 0,
-        "outputSample": "npm warn Unknown env config \u0022scripts-prepend-node-path\u0022. This will stop working in the next major version of npm.\r\n\r\n\u003E lunar-landing-site-frontend@0.1.0 build\r\n\u003E tsc -b \u0026\u0026 vite build\r\n\r\n\u001B[36mvite v5.4.21 \u001B[32mbuilding for production...\u001B[36m\u001B[39m\r\ntransforming...\r\n\u001B[32m\u2713\u001B[39m 626 modules transformed.\r\nrendering chunks...\r\ncomputing gzip size...\r\n\u001B[2mdist/\u001B[22m\u001B[32mindex.html                 \u001B[39m\u001B[1m\u001B[2m    0.59 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip:   0.36 kB\u001B[22m\r\n\u001B[2mdist/\u001B[22m\u001B[35massets/index-CVv_afet.css  \u001B[39m\u001B[1m\u001B[2m   11.46 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip:   3.18 kB\u001B[22m\r\n\u001B[2mdist/\u001B[22m\u001B[36massets/index-BxHPvVXw.js   \u001B[39m\u001B[1m\u001B[33m1,026.27 kB\u001B[39m\u001B[22m\u001B[2m \u2502 gzip: 285.39 kB\u001B[22m\r\n\u001B[33m\r\n(!) Some chunks are larger than 500 kB after minification. Consider:\r\n- Using dynamic import() to code-split the application\r\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\r\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001B[39m\r\n\u001B[32m\u2713 built in 8.84s\u001B[39m\r\n",
-        "durationMs": 17237
+        "outputSample": "\r\n\u003E lunar-landing-site-frontend@0.1.0 build\r\n\u003E tsc -b \u0026\u0026 vite build\r\n\r\n\u001B[36mvite v5.4.21 \u001B[32mbuilding for production...\u001B[36m\u001B[39m\r\ntransforming...\r\n\u001B[32m\u2713\u001B[39m 626 modules transformed.\r\nrendering chunks...\r\ncomputing gzip size...\r\n\u001B[2mdist/\u001B[22m\u001B[32mindex.html                 \u001B[39m\u001B[1m\u001B[2m    0.59 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip:   0.36 kB\u001B[22m\r\n\u001B[2mdist/\u001B[22m\u001B[35massets/index-CVv_afet.css  \u001B[39m\u001B[1m\u001B[2m   11.46 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip:   3.18 kB\u001B[22m\r\n\u001B[33m\r\n(!) Some chunks are larger than 500 kB after minification. Consider:\r\n- Using dynamic import() to code-split the application\r\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\r\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001B[39m\r\n\u001B[2mdist/\u001B[22m\u001B[36massets/index-BxHPvVXw.js   \u001B[39m\u001B[1m\u001B[33m1,026.27 kB\u001B[39m\u001B[22m\u001B[2m \u2502 gzip: 285.39 kB\u001B[22m\r\n\u001B[32m\u2713 built in 6.19s\u001B[39m\r\n",
+        "durationMs": 10006
       },
       {
         "name": "dev-server-serves-home",
@@ -32,7 +32,7 @@
         "skippedReason": null,
         "exitCode": null,
         "outputSample": "HTTP 200\n\u003C!doctype html\u003E\n\u003Chtml lang=\u0022en\u0022\u003E\n  \u003Chead\u003E\n    \u003Cscript type=\u0022module\u0022\u003Eimport { injectIntoGlobalHook } from \u0022/@react-refresh\u0022;\ninjectIntoGlobalHook(window);\nwindow.$RefreshReg$ = () =\u003E {};\nwindow.$RefreshSig$ = () =\u003E (type) =\u003E type;\u003C/script\u003E\n\n    \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\n    \u003Cmeta charset=\u0022UTF-8\u0022 /\u003E\n    \u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1.0\u0022 /\u003E\n    \u003Cmeta name=\u0022theme-color\u0022 content=\u0022#000000\u0022 /\u003E\n    \u003Cmeta\n      name=\u0022description\u0022\n      content=\u0022Lunar Landing Site Explorer - Analyze Sun illumination and Earth communication visibility at the Moon\u0027s South Pole\u0022\n    /\u003E\n    \u003Clink rel=\u0022preconnect\u0022 href=\u0022https://fonts.googleapis.com\u0022 /\u003E\n    \u003Clink rel=\u0022preconnect\u0022 href=\u0022https://fonts.gstatic.com\u0022 crossorigin /\u003E\n    \u003Clink\n      href=\u0022https://fonts.googleapis.com/css2?family=Inter\u002BTight:ital,wght@0,300..800;1,300..800\u0026family=JetBrains\u002BMono:ital,wght@0,400..700;1,400..700\u0026display=swap\u0022\n      rel=\u0022stylesheet\u0022\n    /\u003E\n    \u003Ctitle\u003ELunar Landing Site Explorer\u003C/title\u003E\n  \u003C/head\u003E\n  \u003Cbody class=\u0022bg-black text-[#f1efe6] antialiased selection:bg-[#ff6b35]/20 selection:text-[#f1efe6]\u0022\u003E\n    \u003Cdiv id=\u0022root\u0022\u003E\u003C/div\u003E\n    \u003Cscript type=\u0022module\u0022 src=\u0022/src/main.tsx\u0022\u003E\u003C/script\u003E\n  \u003C/body\u003E\n\u003C/html\u003E\n",
-        "durationMs": 74
+        "durationMs": 54
       },
       {
         "name": "tests-pass",
@@ -43,8 +43,8 @@
         "skipped": false,
         "skippedReason": null,
         "exitCode": 0,
-        "outputSample": "npm warn Unknown env config \u0022scripts-prepend-node-path\u0022. This will stop working in the next major version of npm.\r\n\r\n\u003E lunar-landing-site-frontend@0.1.0 test\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[46m RUN \u001B[49m\u001B[22m \u001B[36mv3.2.7 \u001B[39m\u001B[90mC:/Users/sghai/OneDrive/Bureau/nasa2/NAZA_Hackathon/frontend\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m src/api/index.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 8\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m1 passed\u001B[39m\u001B[22m\u001B[90m (1)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m3 passed\u001B[39m\u001B[22m\u001B[90m (3)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 15:37:30\r\n\u001B[2m   Duration \u001B[22m 1.50s\u001B[2m (transform 78ms, setup 0ms, collect 86ms, tests 8ms, environment 0ms, prepare 944ms)\u001B[22m\r\n\r\n",
-        "durationMs": 3411,
+        "outputSample": "\r\n\u003E lunar-landing-site-frontend@0.1.0 test\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[46m RUN \u001B[49m\u001B[22m \u001B[36mv3.2.7 \u001B[39m\u001B[90mC:/Users/sghai/OneDrive/Bureau/nasa2/NAZA_Hackathon/frontend\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m src/api/index.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 5\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m1 passed\u001B[39m\u001B[22m\u001B[90m (1)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m3 passed\u001B[39m\u001B[22m\u001B[90m (3)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 15:44:18\r\n\u001B[2m   Duration \u001B[22m 1.50s\u001B[2m (transform 60ms, setup 0ms, collect 69ms, tests 5ms, environment 0ms, prepare 199ms)\u001B[22m\r\n\r\n",
+        "durationMs": 2971,
         "testResults": {
           "testFramework": "vitest",
           "runnerDetectedFrom": "package_json",
@@ -59,7 +59,7 @@
     "executions": [
       {
         "source": "production-build",
-        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
         "args": [
           "run",
           "build"
@@ -67,23 +67,11 @@
         "cwd": "C:\\Users\\sghai\\OneDrive\\Bureau\\nasa2\\NAZA_Hackathon\\frontend",
         "env": {},
         "prependPath": [],
-        "platform": "win32",
-        "nodeExecutable": "C:\\Program Files\\nodejs\\node.EXE",
-        "nodeVersion": "v24.13.0",
-        "packageManager": "npm",
-        "packageManagerExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
-        "packageManagerVersion": "11.6.2",
-        "cleanup": {
-          "RootProcessId": 15776,
-          "Completed": true,
-          "ProcessesObserved": 13,
-          "ProcessesTerminated": 1,
-          "Failure": null
-        }
+        "platform": "win32"
       },
       {
         "source": "dev-server-serves-home",
-        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
         "args": [
           "run",
           "dev",
@@ -94,42 +82,18 @@
         "cwd": "C:\\Users\\sghai\\OneDrive\\Bureau\\nasa2\\NAZA_Hackathon\\frontend",
         "env": {},
         "prependPath": [],
-        "platform": "win32",
-        "nodeExecutable": "C:\\Program Files\\nodejs\\node.EXE",
-        "nodeVersion": "v24.13.0",
-        "packageManager": "npm",
-        "packageManagerExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
-        "packageManagerVersion": "11.6.2",
-        "cleanup": {
-          "RootProcessId": 6044,
-          "Completed": true,
-          "ProcessesObserved": 2,
-          "ProcessesTerminated": 2,
-          "Failure": null
-        }
+        "platform": "win32"
       },
       {
         "source": "tests-pass",
-        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
         "args": [
           "test"
         ],
         "cwd": "C:\\Users\\sghai\\OneDrive\\Bureau\\nasa2\\NAZA_Hackathon\\frontend",
         "env": {},
         "prependPath": [],
-        "platform": "win32",
-        "nodeExecutable": "C:\\Program Files\\nodejs\\node.EXE",
-        "nodeVersion": "v24.13.0",
-        "packageManager": "npm",
-        "packageManagerExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
-        "packageManagerVersion": "11.6.2",
-        "cleanup": {
-          "RootProcessId": 452,
-          "Completed": true,
-          "ProcessesObserved": 28,
-          "ProcessesTerminated": 1,
-          "Failure": null
-        }
+        "platform": "win32"
       }
     ]
   }
