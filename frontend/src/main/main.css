@@ -2,7 +2,7 @@
 .simulation-canvas { position: absolute; inset: 0; z-index: 0; }
 .simulation-canvas canvas { display: block; }
 .simulation-backdrop { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse 42% 35% at 52% 48%, rgba(126,65,112,.26), transparent 72%), radial-gradient(ellipse 30% 28% at 76% 18%, rgba(74,54,112,.16), transparent 75%), radial-gradient(circle at 42% 52%, transparent 0 24%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.7) 100%), linear-gradient(90deg, rgba(0,0,0,.58), transparent 48%, rgba(0,0,0,.42)); }
-.simulation-topbar, .simulation-title, .simulation-legend, .astronaut-chat { z-index: 3; }
+.simulation-topbar, .simulation-title, .simulation-legend, .astronaut-chat, .floating-astronaut-wrap { z-index: 3; }
 .simulation-topbar { position: absolute; inset: 0 0 auto; height: 68px; display: flex; align-items: center; padding: 0 28px; border-bottom: 1px solid var(--line); background: rgba(0,0,0,.3); backdrop-filter: blur(14px); }
 .simulation-brand { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; color: var(--ink); font: 400 13px var(--mono); letter-spacing: .4em; cursor: pointer; }
 .simulation-brand small { color: var(--dim); font-size: 9px; font-weight: 400; letter-spacing: .16em; }
@@ -40,11 +40,19 @@
 .chat-input input::placeholder { color: var(--dim); }
 .chat-input button { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 999px; background: rgba(243,239,232,.08); color: var(--ink); cursor: pointer; }
 .scene-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--dim); font: 10px var(--mono); letter-spacing: .16em; }
-.floating-astronaut { position: relative; display: grid; width: 52px; height: 52px; place-items: center; border: 1px solid rgba(243,239,232,.55); border-radius: 50%; background: rgba(0,0,0,.5); box-shadow: 0 0 25px rgba(173,112,185,.3); color: var(--ink); cursor: pointer; animation: astronaut-float 4s ease-in-out infinite; }
-.astronaut-helmet { font-size: 19px; }
-.astronaut-thruster { position: absolute; right: 4px; bottom: 1px; color: #d3a9d6; font-size: 11px; }
-.floating-speech { width: 190px; margin: 8px 0 0 -70px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 2px; background: rgba(0,0,0,.78); box-shadow: 0 12px 30px rgba(0,0,0,.35); color: var(--dim); font: 11px/1.45 var(--sans); backdrop-filter: blur(12px); }
+.floating-astronaut-wrap { position: absolute; top: 20%; left: 50%; display: flex; flex-direction: column; align-items: center; animation: astronaut-flight 42s ease-in-out infinite alternate; will-change: transform; }
+.floating-astronaut { position: relative; display: block; width: 100px; height: 112px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; cursor: pointer; animation: astronaut-float 9s ease-in-out infinite; }
+.floating-astronaut canvas { display: block; width: 100% !important; height: 100% !important; filter: drop-shadow(0 0 13px rgba(211,169,214,.45)); }
+.floating-speech { width: 190px; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 2px; background: rgba(0,0,0,.78); box-shadow: 0 12px 30px rgba(0,0,0,.35); color: var(--dim); font: 11px/1.45 var(--sans); backdrop-filter: blur(12px); }
 @keyframes astronaut-float { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-10px) rotate(3deg); } }
+@keyframes astronaut-flight {
+  0% { transform: translate(-43vw, 8vh) rotate(-8deg); }
+  18% { transform: translate(-22vw, -5vh) rotate(7deg); }
+  38% { transform: translate(4vw, 11vh) rotate(-5deg); }
+  58% { transform: translate(29vw, -8vh) rotate(8deg); }
+  78% { transform: translate(43vw, 5vh) rotate(-7deg); }
+  100% { transform: translate(19vw, 14vh) rotate(5deg); }
+}
 .chat-launcher { position: absolute; right: 26px; bottom: 24px; z-index: 4; display: grid; width: 58px; height: 58px; place-items: center; border: 1px solid rgba(243,239,232,.65); border-radius: 50%; background: rgba(0,0,0,.6); box-shadow: 0 0 28px rgba(173,112,185,.35); color: var(--ink); cursor: pointer; }
 .launcher-astronaut { font-size: 21px; }
 .launcher-pulse { position: absolute; inset: -7px; border: 1px solid rgba(211,169,214,.35); border-radius: 50%; animation: pulse 3s ease-out infinite; pointer-events: none; }

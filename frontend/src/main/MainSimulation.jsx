@@ -1,6 +1,6 @@
 import { Suspense, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Html, OrbitControls, Sparkles, useTexture } from "@react-three/drei";
+import { Html, OrbitControls, Sparkles, useGLTF, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import "./main.css";
 
@@ -136,11 +136,29 @@ function SimulationScene({ selected, onSelect }) {
       <Earth />
       <Sun lightRef={sunLight} />
       <SiteMarkers selected={selected} onSelect={onSelect} />
-      <GuideAstronaut selected={selected} />
       <OrbitControls makeDefault enableDamping dampingFactor={0.06} minDistance={3.2} maxDistance={18} rotateSpeed={0.55} zoomSpeed={0.7} />
     </>
   );
 }
+
+function AstronautModel() {
+  const astronaut = useRef();
+  const { scene } = useGLTF("/astronaut_by_jungle_jim.glb");
+
+  useFrame(({ clock }) => {
+    if (!astronaut.current) return;
+    astronaut.current.rotation.y = Math.sin(clock.elapsedTime * 0.45) * 0.45;
+    astronaut.current.rotation.z = Math.sin(clock.elapsedTime * 0.32) * 0.08;
+  });
+
+  return (
+    <group ref={astronaut} rotation={[0.05, -0.3, -0.08]} scale={0.7}>
+      <primitive object={scene} />
+    </group>
+  );
+}
+
+useGLTF.preload("/astronaut_by_jungle_jim.glb");
 
 function GuideAstronaut({ selected }) {
   const [visible, setVisible] = useState(false);
@@ -149,15 +167,16 @@ function GuideAstronaut({ selected }) {
     : "Select a glowing landing region and I’ll read its mission signal.";
 
   return (
-    <group position={[-3.9, 2.2, -1.5]}>
-      <Html distanceFactor={7} center>
-        <button className="floating-astronaut" type="button" onClick={() => setVisible((current) => !current)} aria-label="Show astronaut mission guidance">
-          <span className="astronaut-helmet">◉</span>
-          <span className="astronaut-thruster">✦</span>
-        </button>
-        {visible && <div className="floating-speech">{message}</div>}
-      </Html>
-    </group>
+    <div className="floating-astronaut-wrap">
+      <button className="floating-astronaut" type="button" onClick={() => setVisible((current) => !current)} aria-label="Show astronaut mission guidance">
+        <Canvas orthographic camera={{ position: [0, 0, 5], zoom: 82 }} gl={{ alpha: true, antialias: true }}>
+          <ambientLight intensity={1.4} />
+          <directionalLight position={[2, 3, 4]} intensity={2.2} color="#fff4e8" />
+          <AstronautModel />
+        </Canvas>
+      </button>
+      {visible && <div className="floating-speech">{message}</div>}
+    </div>
   );
 }
 
@@ -207,6 +226,7 @@ export default function MainSimulation({ onBack }) {
           </Canvas>
         </Suspense>
       </div>
+      <GuideAstronaut selected={selected} />
       <button className="chat-launcher" type="button" onClick={() => setChatOpen(true)} aria-label="Open Commander Nova chat">
         <span className="launcher-astronaut">◉</span>
         <span className="launcher-pulse" />
