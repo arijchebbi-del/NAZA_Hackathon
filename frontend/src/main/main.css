@@ -58,3 +58,40 @@
 .launcher-pulse { position: absolute; inset: -7px; border: 1px solid rgba(211,169,214,.35); border-radius: 50%; animation: pulse 3s ease-out infinite; pointer-events: none; }
 .chat-close { margin-left: auto; border: 0; background: transparent; color: var(--dim); font-size: 22px; line-height: 1; cursor: pointer; }
 @media (max-width: 760px) { .simulation-status { display: none; } .simulation-readout { margin-left: auto; } .simulation-title { top: 15%; max-width: 260px; } .simulation-title h1 { font-size: 42px; } .astronaut-chat { top: auto; height: 230px; bottom: 16px; right: 16px; } .simulation-legend { bottom: 264px; left: 16px; flex-direction: column; gap: 7px; } }
+
+/* À AJOUTER à la fin de frontend/src/main/main.css */
+.time-control { position: absolute; z-index: 4; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(460px, calc(100vw - 32px)); padding: 12px 14px; display: flex; flex-direction: column; gap: 9px; border: 1px solid var(--line); border-radius: 2px; background: rgba(0,0,0,.6); box-shadow: 0 20px 70px rgba(0,0,0,.38); backdrop-filter: blur(16px); font: 10px var(--mono); color: var(--dim); }
+.time-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.time-label { letter-spacing: .14em; margin-right: auto; }
+.time-focus .time-label { margin-right: 6px; }
+.time-control input, .time-control select { background: rgba(243,239,232,.06); border: 1px solid var(--line); border-radius: 2px; color: var(--ink); font: 11px var(--mono); padding: 5px 7px; color-scheme: dark; }
+.time-control button { padding: 6px 10px; border: 1px solid var(--line); border-radius: 2px; background: rgba(243,239,232,.06); color: var(--ink); font: 10px var(--mono); letter-spacing: .08em; cursor: pointer; transition: background .2s, color .2s; }
+.time-control button:hover { background: var(--ink); color: #000; }
+.time-control .time-play { min-width: 92px; }
+.time-readout { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 9px; letter-spacing: .08em; }
+@media (max-width: 760px) { .time-control { bottom: 262px; } }
+.time-control { position: absolute; z-index: 4; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(460px, calc(100vw - 32px)); padding: 12px 14px; display: flex; flex-direction: column; gap: 9px; border: 1px solid var(--line); border-radius: 2px; background: rgba(0,0,0,.6); box-shadow: 0 20px 70px rgba(0,0,0,.38); backdrop-filter: blur(16px); font: 10px var(--mono); color: var(--dim); }
+.time-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.time-label { letter-spacing: .14em; margin-right: auto; }
+.time-focus .time-label { margin-right: 6px; }
+.time-control input, .time-control select { background: rgba(243,239,232,.06); border: 1px solid var(--line); border-radius: 2px; color: var(--ink); font: 11px var(--mono); padding: 5px 7px; color-scheme: dark; }
+.time-control button { padding: 6px 10px; border: 1px solid var(--line); border-radius: 2px; background: rgba(243,239,232,.06); color: var(--ink); font: 10px var(--mono); letter-spacing: .08em; cursor: pointer; transition: background .2s, color .2s; }
+.time-control button:hover { background: var(--ink); color: #000; }
+.time-control .time-play { min-width: 92px; }
+.time-readout { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 9px; letter-spacing: .08em; }
+@media (max-width: 760px) { .time-control { bottom: 262px; } }
+
+/* ---- Régions lunaires ---- */
+.region-panel { position: absolute; z-index: 4; left: 28px; top: 96px; width: min(300px, calc(100vw - 56px)); padding: 14px 16px; border: 1px solid var(--line); border-radius: 2px; background: rgba(0,0,0,.6); backdrop-filter: blur(16px); color: var(--dim); font: 10px var(--mono); }
+.region-eyebrow { letter-spacing: .16em; margin-bottom: 8px; }
+.region-panel h3 { margin: 0 0 4px; font: 400 22px var(--serif); color: var(--ink); border-left: 3px solid var(--region-color, var(--ink)); padding-left: 9px; }
+.region-meta { letter-spacing: .06em; margin-bottom: 8px; }
+.region-panel p { margin: 0 0 10px; font: 300 12px/1.5 var(--sans); }
+.region-panel button { padding: 5px 9px; border: 1px solid var(--line); border-radius: 2px; background: rgba(243,239,232,.06); color: var(--ink); font: 9px var(--mono); letter-spacing: .1em; cursor: pointer; }
+.region-cursor { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); letter-spacing: .1em; }
+.region-label { min-width: max-content; padding: 6px 9px; border: 1px solid var(--region-color, var(--line)); border-left-width: 3px; border-radius: 2px; background: rgba(0,0,0,.82); color: var(--ink); font: 10px var(--mono); }
+.region-label strong, .region-label span { display: block; white-space: nowrap; }
+.region-label strong { font-weight: 500; }
+.region-label span { margin-top: 3px; color: var(--dim); font-size: 9px; }
+.region-label-selected { box-shadow: 0 0 18px rgba(243,239,232,.14); }
+@media (max-width: 760px) { .region-panel { top: 76px; left: 12px; } }
