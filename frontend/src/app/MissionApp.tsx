@@ -1,9 +1,9 @@
-import App from "../App.tsx";
+import MainSimulation from "../main/MainSimulation";
 
 interface MissionAppProps {
   onBack?: () => void;
 }
 
 export default function MissionApp({ onBack }: MissionAppProps) {
-  return <App onBack={onBack} />;
+  return <MainSimulation onBack={onBack} />;
 }
