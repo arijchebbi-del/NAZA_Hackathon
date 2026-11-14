@@ -1,0 +1,165 @@
+/* frontend/src/pages/Home.css */
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap");
+
+/* Tokens
+   void       #000000  true black, as asked
+   starlight  #eef2fb  text
+   dust       #a9b1c4  secondary text (contrast above 7:1 on black)
+   moonlight  #ece9e1  button, like lit regolith
+   focus      #8ab8ff  keyboard focus
+*/
+.home {
+  --void: #000000;
+  --starlight: #eef2fb;
+  --dust: #a9b1c4;
+  --moonlight: #ece9e1;
+  --focus: #8ab8ff;
+
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--starlight);
+  background: var(--void);
+  font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Three.js canvas fills the page, behind the text */
+.home__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.home__canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Text block: left on wide screens (the rocket flies on the right) */
+.home__content {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  min-height: inherit;
+  max-width: 44rem;
+  padding: 0 clamp(1.5rem, 8vw, 7.5rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  animation: home-reveal 1.1s ease-out both;
+}
+
+.home__title {
+  margin: 0;
+  max-width: 9ch;
+  font-size: clamp(2.8rem, 7.2vw, 5.75rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.home__subtitle {
+  margin: 1.5rem 0 0;
+  max-width: 32rem;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  line-height: 1.55;
+  color: var(--dust);
+}
+
+.home__cta {
+  align-self: flex-start;
+  margin-top: 2.25rem;
+  padding: 1rem 1.9rem;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #050505;
+  background: var(--moonlight);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(236, 233, 225, 0.5), 0 8px 44px rgba(236, 233, 225, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home__cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgba(236, 233, 225, 0.8), 0 12px 56px rgba(236, 233, 225, 0.36);
+}
+
+.home__cta:active {
+  transform: translateY(0);
+}
+
+.home__cta:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.home__cta[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.85;
+  transform: none;
+}
+
+.home__credit {
+  position: absolute;
+  z-index: 1;
+  left: clamp(1.5rem, 8vw, 7.5rem);
+  bottom: 1.25rem;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--dust);
+  opacity: 0.8;
+}
+
+/* Single entrance: the text fades in once */
+@keyframes home-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Narrow screens: rocket on top, text and button centred near the bottom */
+@media (max-width: 899px) {
+  .home__content {
+    max-width: none;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: clamp(5rem, 16vh, 9rem);
+    text-align: center;
+  }
+
+  .home__title {
+    max-width: 12ch;
+    font-size: clamp(2.4rem, 11vw, 3.6rem);
+  }
+
+  .home__cta {
+    align-self: center;
+  }
+
+  .home__credit {
+    left: 0;
+    right: 0;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home__content {
+    animation: none;
+  }
+
+  .home__cta {
+    transition: none;
+  }
+}

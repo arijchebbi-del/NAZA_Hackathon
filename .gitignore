@@ -1,5 +1,18 @@
 
+
+# Local environment files
 .env
-node_modules/
-frontend/dist/
-frontend/node_modules/
+.env.*
+!.env.example
+
+# JavaScript dependencies and build output
+**/node_modules/
+**/dist/
+**/.vite/
+**/coverage/
+
+# Python caches and test artifacts
+**/__pycache__/
+*.py[cod]
+**/.pytest_cache/
+
