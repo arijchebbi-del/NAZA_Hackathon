@@ -33,7 +33,11 @@ function SceneFallback() {
   return <div className="scene-fallback"><div className="moon-loader" /><span>INITIALIZING LUNAR SURVEY</span></div>;
 }
 
-export default function App() {
+interface AppProps {
+  onBack?: () => void;
+}
+
+export default function App({ onBack }: AppProps) {
   const sites = useStore((state) => state.sites);
   const selectedSiteId = useStore((state) => state.selectedSiteId);
   const selectedDate = useStore((state) => state.selectedDate);
@@ -112,10 +116,10 @@ export default function App() {
   return (
     <div className={`app-shell ${chatOpen ? "chat-is-open" : ""}`}>
       <header className="topbar">
-        <div className="brand-lockup">
+        <button className="brand-lockup brand-home-button" onClick={onBack} disabled={!onBack} aria-label="Back to home">
           <div className="brand-mark"><span /><i /><b /></div>
           <div className="brand-text"><strong>LUNAR<span>/</span>SITE</strong><small>MISSION PLANNING SYSTEM</small></div>
-        </div>
+        </button>
         <div className="topbar-center"><span className="mission-dot" /> SOUTH POLE CANDIDATE SURVEY <span className="topbar-divider">/</span> ARTEMIS III</div>
         <div className="topbar-right">
           <span className="utc-readout"><i /> DATA RANGE ONLINE</span>
