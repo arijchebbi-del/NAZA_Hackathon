@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DATE_MAX, DATE_MIN, getSite } from "./api";
 import { USE_MOCK } from "./api/config";
 import type { Site, View } from "./api";
-import GlobeScene from "./components/GlobeScene";
+import LunarScene from "./components/LunarScene";
 import HeatmapView from "./components/HeatmapView";
 import SiteView from "./components/SiteView";
 import Timeline from "./components/Timeline";
@@ -17,6 +17,12 @@ const views: { id: View; label: string; icon: "globe" | "site" | "map" }[] = [
   { id: "site", label: "Site", icon: "site" },
   { id: "heatmap", label: "Heatmap", icon: "map" },
 ];
+
+const earthTextureUrls = {
+  albedo: "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg",
+  normal: "https://threejs.org/examples/textures/planets/earth_normal_2048.jpg",
+  specular: "https://threejs.org/examples/textures/planets/earth_specular_2048.jpg",
+};
 
 function scoreColor(score: number | null): string {
   if (score === null) return "score-muted";
@@ -187,7 +193,7 @@ export default function App({ onBack }: AppProps) {
               {view === "globe" && (
                 <motion.section key="globe" className="globe-stage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
                   <Suspense fallback={<SceneFallback />}>
-                    <GlobeScene sites={sites} selectedSiteId={selectedSiteId} selectedDate={selectedDate} freeFlight={freeFlight} onSelect={selectSite} />
+                    <LunarScene sites={sites} selectedSiteId={selectedSiteId} selectedDate={selectedDate} time={`${selectedDate}T12:00:00.000Z`} earthTextureUrls={earthTextureUrls} freeFlight={freeFlight} onSelect={selectSite} />
                   </Suspense>
                   <div className="scene-coordinate"><span className="eyebrow">LUNAR SOUTH POLE</span><strong>90° 00′ 00″ S <i>/</i> 000° 00′ 00″ E</strong><small>SELENOCENTRIC REFERENCE · MEAN RADIUS 1,737.4 KM</small></div>
                   <div className="scene-actions">

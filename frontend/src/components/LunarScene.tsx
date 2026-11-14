@@ -6,7 +6,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import type { Site } from "../api";
 
-interface GlobeSceneProps {
+interface LunarSceneProps {
   sites: Site[];
   selectedSiteId: string | null;
   selectedDate: string;
@@ -29,7 +29,7 @@ function timeToEpochMs(time: Date | number | string | undefined, selectedDate: s
     : typeof value === "number"
       ? value
       : Date.parse(value);
-  if (!Number.isFinite(epochMs)) throw new RangeError("GlobeScene time must be a valid date or timestamp.");
+  if (!Number.isFinite(epochMs)) throw new RangeError("LunarScene time must be a valid date or timestamp.");
   return epochMs;
 }
 
@@ -127,7 +127,7 @@ function Moon({
   selectedSiteId,
   onSelect,
   rotationRef,
-}: Pick<GlobeSceneProps, "sites" | "selectedSiteId" | "onSelect"> & { rotationRef: MutableRefObject<number> }) {
+}: Pick<LunarSceneProps, "sites" | "selectedSiteId" | "onSelect"> & { rotationRef: MutableRefObject<number> }) {
   const moon = useRef<THREE.Mesh>(null);
   const root = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
@@ -163,8 +163,8 @@ function Moon({
           normalMap={textures.normalMap}
           normalScale={[0.8, 0.8]}
           displacementMap={textures.displacementMap}
-          displacementScale={0.014}
-          displacementBias={-0.007}
+          displacementScale={0.05}
+          displacementBias={-0.01}
           roughness={0.97}
           metalness={0}
         />
@@ -296,10 +296,10 @@ function SunLight({ position }: { position: THREE.Vector3 }) {
     if (!light.current) return;
     const shadow = light.current.shadow;
     shadow.mapSize.set(2048, 2048);
-    shadow.camera.left = -3.2;
-    shadow.camera.right = 3.2;
-    shadow.camera.top = 3.2;
-    shadow.camera.bottom = -3.2;
+    shadow.camera.left = -2.8;
+    shadow.camera.right = 2.8;
+    shadow.camera.top = 2.8;
+    shadow.camera.bottom = -2.8;
     shadow.camera.near = 0.1;
     shadow.camera.far = 50;
     shadow.bias = -0.00005;
@@ -318,7 +318,7 @@ function SunLight({ position }: { position: THREE.Vector3 }) {
   );
 }
 
-function CameraFlight({ selectedSiteId, sites, rotationRef }: Pick<GlobeSceneProps, "selectedSiteId" | "sites"> & { rotationRef: MutableRefObject<number> }) {
+function CameraFlight({ selectedSiteId, sites, rotationRef }: Pick<LunarSceneProps, "selectedSiteId" | "sites"> & { rotationRef: MutableRefObject<number> }) {
   const controls = useRef<OrbitControlsImpl | null>(null);
   const { camera } = useThree();
   const flight = useRef<{ from: THREE.Vector3; to: THREE.Vector3; targetFrom: THREE.Vector3; targetTo: THREE.Vector3; start: number } | null>(null);
@@ -400,7 +400,7 @@ function FreeFlight({ enabled }: { enabled: boolean }) {
   return enabled ? <PointerLockControls /> : null;
 }
 
-export default function GlobeScene(props: GlobeSceneProps) {
+export default function LunarScene(props: LunarSceneProps) {
   const rotationRef = useRef(0);
   const epochMs = timeToEpochMs(props.time, props.selectedDate);
   const sunPosition = useMemo(() => sunDirectionAt(epochMs).multiplyScalar(40), [epochMs]);
