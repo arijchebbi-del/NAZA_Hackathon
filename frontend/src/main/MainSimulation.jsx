@@ -6,6 +6,7 @@ import { computeMoonFrame, selenographicToVector, siteLighting, toSceneVectors }
 import NebulaSky from "./NebulaSky";
 import { RegionHighlight, RegionPanel, RegionPicker, RegionPins } from "./MoonRegions";
 import { REGIONS } from "./lunarRegions";
+import SatelliteLauncher from "../components/SatelliteLauncher";
 import "./main.css";
 
 /* ------------------------------------------------------------------ */
@@ -479,12 +480,18 @@ function AstronautChat({ open, onClose }) {
     { role: "assistant", text: "Welcome aboard. I can help compare lunar landing sites." },
   ]);
 
+  function sendMessage(value) {
+    const text = value.trim();
+    if (!text) return;
+    setMessages((current) => [...current, { role: "user", text }, { role: "assistant", text: "Telemetry received. I’ll prepare that mission brief." }]);
+    setMessage("");
+  }
+
   function submit(event) {
     event.preventDefault();
     const value = message.trim();
     if (!value) return;
-    setMessages((current) => [...current, { role: "user", text: value }, { role: "assistant", text: "Telemetry received. I’ll prepare that mission brief." }]);
-    setMessage("");
+    sendMessage(value);
   }
 
   if (!open) return null;
@@ -498,9 +505,22 @@ function AstronautChat({ open, onClose }) {
       </div>
       <div className="chat-messages">
         {messages.map((item, index) => <div key={`${item.role}-${index}`} className={`chat-message ${item.role}`}>{item.text}</div>)}
+        {messages.length === 1 && messages[0].role === "assistant" && (
+          <div className="chat-suggestions" aria-label="Suggested questions">
+            {[
+              "Compare Shackleton and Malapert",
+              "Why is the Sun so low at the south pole?",
+              "Which site has the best Earth visibility?",
+            ].map((suggestion) => (
+              <button key={suggestion} type="button" className="chat-suggestion" onClick={() => sendMessage(suggestion)}>
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <form className="chat-input" onSubmit={submit}>
-        <input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Ask about a landing site…" aria-label="Message Commander Nova" />
+        <input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Ask about a landing site, a date, or a comparison…" aria-label="Message Commander Nova" />
         <button type="submit" aria-label="Send message">↗</button>
       </form>
     </aside>
@@ -604,10 +624,13 @@ export default function MainSimulation({ onBack }) {
         onDate={setSimulationDate} onPlaying={setPlaying} onSpeed={setSpeed}
         onFocus={(name) => setFocusRequest({ name, n: (focusCount.current += 1) })}
       />
-      <button className="chat-launcher" type="button" onClick={() => setChatOpen(true)} aria-label="Open Commander Nova chat">
-        <span className="launcher-astronaut">◉</span>
-        <span className="launcher-pulse" />
-      </button>
+      <SatelliteLauncher
+        open={chatOpen}
+        onToggle={() => setChatOpen((current) => !current)}
+        streaming={false}
+        unread={false}
+        error={false}
+      />
       <AstronautChat open={chatOpen} onClose={() => setChatOpen(false)} />
       <div className="simulation-backdrop" />
     </div>
