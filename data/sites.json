@@ -1,7 +1,12 @@
 {
   "regions": [
-    {"id": "sample_site_a", "name": "Sample Site A", "type": "sample", "lat": null, "lon": null, "source": "FAKE test data"},
-    {"id": "sample_site_b", "name": "Sample Site B", "type": "sample", "lat": null, "lon": null, "source": "FAKE test data"},
-    {"id": "sample_site_c", "name": "Sample Site C", "type": "sample", "lat": null, "lon": null, "source": "FAKE test data"}
+    {"id": "shackleton-rim", "name": "Shackleton Rim", "type": "Crater rim", "lat": -89.9, "lon": 0.0, "source": "Lunar DEM / physical evaluator"},
+    {"id": "connecting-ridge", "name": "Connecting Ridge", "type": "Elevated ridge", "lat": -89.6, "lon": 41.2, "source": "Lunar DEM / physical evaluator"},
+    {"id": "malapert-massif", "name": "Malapert Massif", "type": "Massif", "lat": -85.9, "lon": 0.0, "source": "Lunar DEM / physical evaluator"},
+    {"id": "de-gerlache", "name": "de Gerlache Rim", "type": "Crater rim", "lat": -88.3, "lon": 290.2, "source": "Lunar DEM / physical evaluator"},
+    {"id": "nobile", "name": "Nobile", "type": "Crater rim", "lat": -84.7, "lon": 53.1, "source": "Lunar DEM / physical evaluator"},
+    {"id": "haworth", "name": "Haworth", "type": "Crater rim", "lat": -87.4, "lon": 315.6, "source": "Lunar DEM / physical evaluator"},
+    {"id": "faustini", "name": "Faustini Rim", "type": "Crater rim", "lat": -87.3, "lon": 77.2, "source": "Lunar DEM / physical evaluator"},
+    {"id": "cabeus", "name": "Cabeus", "type": "Crater floor", "lat": -85.4, "lon": 311.4, "source": "Lunar DEM / physical evaluator"}
   ]
 }

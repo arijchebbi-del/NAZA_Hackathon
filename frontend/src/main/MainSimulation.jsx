@@ -8,6 +8,7 @@ import { RegionLabel, RegionPanel, RegionPicker, RegionPins, FreePointMarker, de
 import { Marker } from "./markers";
 import { REGIONS } from "./lunarRegions";
 import SatelliteLauncher from "../components/SatelliteLauncher";
+import { chat } from "../api";
 import "./main.css";
 
 /* ------------------------------------------------------------------ */
@@ -471,24 +472,47 @@ function GuideAstronaut({ selected, frame }) {
   );
 }
 
-function AstronautChat({ open, onClose }) {
+function AstronautChat({ open, onClose, target, targets, date }) {
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([
     { role: "assistant", text: "Welcome aboard. I can help compare lunar landing sites." },
   ]);
 
-  function sendMessage(value) {
+  async function sendMessage(value) {
     const text = value.trim();
-    if (!text) return;
-    setMessages((current) => [...current, { role: "user", text }, { role: "assistant", text: "Telemetry received. I’ll prepare that mission brief." }]);
+    if (!text || loading) return;
     setMessage("");
+    setMessages((current) => [...current, { role: "user", text }]);
+    setLoading(true);
+    try {
+      const history = messages
+        .filter((item) => item.role === "user" || item.role === "assistant")
+        .map((item) => ({ role: item.role, content: item.text }));
+      const response = await chat(text, history, "expert", {
+        selected_site: target?.id ?? null,
+        selected_date: date.toISOString().slice(0, 10),
+        view: "globe",
+      }, targets.length ? targets : undefined);
+      setMessages((current) => [...current, {
+        role: "assistant",
+        text: response.text || "I couldn't generate an answer for that request.",
+      }]);
+    } catch (error) {
+      setMessages((current) => [...current, {
+        role: "assistant",
+        text: error instanceof Error ? `I couldn't reach the mission assistant: ${error.message}` : "I couldn't reach the mission assistant.",
+      }]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function submit(event) {
     event.preventDefault();
     const value = message.trim();
     if (!value) return;
-    sendMessage(value);
+    void sendMessage(value);
   }
 
   if (!open) return null;
@@ -502,6 +526,7 @@ function AstronautChat({ open, onClose }) {
       </div>
       <div className="chat-messages">
         {messages.map((item, index) => <div key={`${item.role}-${index}`} className={`chat-message ${item.role}`}>{item.text}</div>)}
+        {loading && <div className="chat-message assistant">Preparing your mission brief…</div>}
         {messages.length === 1 && messages[0].role === "assistant" && (
           <div className="chat-suggestions" aria-label="Suggested questions">
             {[
@@ -509,7 +534,7 @@ function AstronautChat({ open, onClose }) {
               "Why is the Sun so low at the south pole?",
               "Which site has the best Earth visibility?",
             ].map((suggestion) => (
-              <button key={suggestion} type="button" className="chat-suggestion" onClick={() => sendMessage(suggestion)}>
+              <button key={suggestion} type="button" className="chat-suggestion" onClick={() => void sendMessage(suggestion)}>
                 {suggestion}
               </button>
             ))}
@@ -518,7 +543,7 @@ function AstronautChat({ open, onClose }) {
       </div>
       <form className="chat-input" onSubmit={submit}>
         <input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Ask about a landing site, a date, or a comparison…" aria-label="Message Commander Nova" />
-        <button type="submit" aria-label="Send message">↗</button>
+        <button type="submit" disabled={loading} aria-label="Send message">↗</button>
       </form>
     </aside>
   );
@@ -586,6 +611,7 @@ export default function MainSimulation({ onBack }) {
   const [hoveredRegion, setHoveredRegion] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [freePoint, setFreePoint] = useState(null); // ★ { lat, lon } d'un clic sur une zone sans région
+  const [chatTargets, setChatTargets] = useState([]);
   const cursorRef = useRef(null);
   const handleCursor = useCallback((cursor) => {
     // Mise à jour directe du DOM : évite un re-render React à chaque mouvement de souris.
@@ -601,6 +627,52 @@ export default function MainSimulation({ onBack }) {
 
   // ★ Éclairage + score du point libre, recalculés avec la simulation.
   const freeInfo = useMemo(() => (freePoint ? describeFreePoint(frame, freePoint) : null), [freePoint, frame]);
+  const chatTarget = useMemo(() => {
+    if (selectedRegion) {
+      return {
+        id: selectedRegion.id,
+        name: selectedRegion.name,
+        type: selectedRegion.type,
+        lat: selectedRegion.lat,
+        lon: selectedRegion.lon,
+        score: null,
+        parameters: {},
+      };
+    }
+    if (freeInfo) {
+      return {
+        id: "custom-point",
+        name: "Custom point",
+        type: "custom",
+        lat: freeInfo.lat,
+        lon: freeInfo.lon,
+        score: freeInfo.score,
+        parameters: {
+          sun_elevation_deg: freeInfo.sunElevationDeg,
+          earth_elevation_deg: freeInfo.earthElevationDeg,
+          p_no_collision: 1,
+          steepness_deg: 0,
+        },
+      };
+    }
+    return null;
+  }, [freeInfo, selectedRegion]);
+
+  useEffect(() => {
+    if (!chatTarget) return;
+    setChatTargets((current) => {
+      const samePoint = (item) =>
+        item.id === chatTarget.id &&
+        item.lat === chatTarget.lat &&
+        item.lon === chatTarget.lon;
+      if (current.some(samePoint)) return current;
+      const customCount = current.filter((item) => item.id === "custom-point").length;
+      const name = chatTarget.id === "custom-point"
+        ? `Custom point ${customCount + 1}`
+        : chatTarget.name;
+      return [...current, { ...chatTarget, name }];
+    });
+  }, [chatTarget]);
 
   const regions = useMemo(
     () => ({
@@ -645,7 +717,13 @@ export default function MainSimulation({ onBack }) {
         unread={false}
         error={false}
       />
-      <AstronautChat open={chatOpen} onClose={() => setChatOpen(false)} />
+      <AstronautChat
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        target={chatTarget}
+        targets={chatTargets}
+        date={simulationDate}
+      />
       <div className="simulation-backdrop" />
     </div>
   );

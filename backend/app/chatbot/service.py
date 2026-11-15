@@ -22,6 +22,7 @@ import openai
 from openai import OpenAI
 
 from . import data_access
+from ..physical import evaluate_site
 from .precompute import precompute
 from .prompts import build_system_prompt
 from .tools import TOOLS, validate_tool_call
@@ -120,6 +121,140 @@ def _template_answer(computed: Optional[dict]) -> str:
     return "\n".join(lines)
 
 
+def _offline_actions(question: str, app_state: dict) -> list[dict]:
+    """Keep navigation usable when no LLM provider is configured."""
+    normalized = data_access.normalize(question)
+    names = [
+        name for name in data_access.list_names()
+        if data_access.normalize(name) in normalized
+        or any(len(part) >= 4 and f" {part} " in f" {normalized} " for part in data_access.normalize(name).split())
+    ]
+    actions: list[dict] = []
+    if "compare" in normalized or " versus " in f" {normalized} " or " vs " in f" {normalized} ":
+        if len(names) >= 2:
+            result = validate_tool_call("compare_sites", {"names": names[:3]})
+            if result.ok:
+                actions.append(result.to_action())
+    elif names:
+        result = validate_tool_call("select_site", {"name": names[0]})
+        if result.ok:
+            actions.append(result.to_action())
+    iso = __import__("re").search(r"\b(20\d{2}-\d{2}-\d{2})\b", question)
+    if iso:
+        result = validate_tool_call("set_date", {"date": iso.group(1)})
+        if result.ok:
+            actions.append(result.to_action())
+    if any(word in normalized for word in ("sky", "sun", "earth", "horizon")):
+        actions.append({"type": "set_view", "args": {"view": "site"}})
+    elif "heatmap" in normalized or "polar map" in normalized:
+        actions.append({"type": "set_view", "args": {"view": "heatmap"}})
+    return actions
+
+
+def _earth_visibility_answer(question: str, regions: list[dict], computed: dict | None, selected_date: str) -> str | None:
+    normalized = data_access.normalize(question)
+    if not computed or "earth" not in normalized:
+        return None
+    if not any(word in normalized for word in ("visibility", "elevation", "visible")):
+        return None
+    if not any(word in normalized for word in ("best", "which", "rank", "compare")):
+        return None
+    values = (computed.get("parameters") or {}).get("earth_elevation_deg", {}).get("values", {})
+    if not values:
+        return None
+    ranking = sorted(values.items(), key=lambda item: item[1], reverse=True)
+    leader, leader_value = ranking[0]
+    lines = [
+        f"**Earth visibility ranking ({selected_date})**",
+        f"**Best site: {leader}** with Earth elevation **{leader_value:.2f}°**.",
+        "",
+        "Full ranking:",
+    ]
+    lines.extend(f"{index}. {name}: {value:.2f}°" for index, (name, value) in enumerate(ranking, 1))
+    lines.append("")
+    lines.append("Higher Earth elevation means a clearer direct geometric line of sight; values below 0° are below the local horizon.")
+    return "\n".join(lines)
+
+
+def _site_description_answer(question: str, regions: list[dict], computed: dict | None, selected_date: str) -> str | None:
+    if not computed or len(regions) != 1:
+        return None
+    normalized = data_access.normalize(question)
+    if not any(term in normalized for term in (
+        "describe",
+        "this one",
+        "selected",
+        "selection",
+        "what about this",
+        "analyze",
+        "analyse",
+        "analysis",
+        "planning spot",
+        "landing spot",
+        "landing site",
+        "planning site",
+    )):
+        return None
+    region = regions[0]
+    parameters = computed.get("parameters") or {}
+    def value(key: str, fallback: str = "n/a") -> str:
+        values = parameters.get(key, {}).get("values", {})
+        raw = values.get(region.get("name"))
+        return fallback if raw is None else f"{raw:.2f}"
+    score = computed["ranking"][0]["score"]
+    earth = value("earth_elevation_deg")
+    sun = value("sun_elevation_deg")
+    slope = value("steepness_deg")
+    collision = value("p_no_collision")
+    sun_status = "lit" if float(sun) > 0 else "in shadow"
+    earth_status = "visible" if float(earth) > 0 else "below the horizon"
+    detail_requested = any(term in normalized for term in ("detail", "detailed", "technical", "full"))
+    if not detail_requested:
+        return (
+            f"**{region.get('name', 'Selected point')}** — **{score:.2f}/100** ({selected_date})\n\n"
+            f"- Slope: **{slope}°**\n"
+            f"- Sun: **{sun}°**, {sun_status}\n"
+            f"- Earth: **{earth}°**, {earth_status}\n\n"
+            f"**Verdict:** {'promising communication geometry' if float(earth) > 0 else 'no direct Earth link'}; "
+            f"solar conditions are {'available' if float(sun) > 0 else 'unfavorable'}."
+        )
+    return (
+        f"**{region.get('name', 'Selected point')}** at "
+        f"{float(region.get('lat', 0)):.2f}°, {float(region.get('lon', 0)):.2f}° "
+        f"on {selected_date} scores **{score:.2f}/100**.\n\n"
+        f"- Slope: **{slope}°** (lower is better)\n"
+        f"- Sun elevation: **{sun}°**\n"
+        f"- Earth elevation: **{earth}°**\n"
+        f"- No-collision factor: **{collision}**\n\n"
+        "This is a planning score, not a mission-success probability."
+    )
+
+
+def _comparison_answer(question: str, computed: dict | None, selected_date: str) -> str | None:
+    if not computed or computed.get("n_regions", 0) < 2:
+        return None
+    normalized = data_access.normalize(question)
+    if not any(term in normalized for term in ("compare", "better", "best", "rank", "which one", "all of")):
+        return None
+    ranking = computed.get("ranking") or []
+    if not ranking:
+        return None
+    first = ranking[0]
+    lines = [
+        f"**Comparison ({selected_date})**",
+        f"Based on the combined evaluator score, **{first['name']}** is currently first.",
+        "",
+    ]
+    for index, row in enumerate(ranking, 1):
+        lines.append(f"{index}) **{row['name']}** — {row['score']:.2f}/100")
+    lines.extend([
+        "",
+        "The score combines terrain steepness, Sun elevation, Earth visibility and the collision factor. "
+        "A higher score is better, but the result is a planning indicator rather than a mission-success probability.",
+    ])
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------- main entry
 def chat(
     question: str,
@@ -130,6 +265,45 @@ def chat(
 ) -> dict:
     app_state = app_state or {}
     regions = _resolve_regions(regions, app_state)
+    if not regions:
+        question_normalized = data_access.normalize(question)
+        mentioned = [
+            name for name in data_access.list_names()
+            if data_access.normalize(name) in question_normalized
+            or any(
+                len(part) >= 4 and f" {part} " in f" {question_normalized} "
+                for part in data_access.normalize(name).split()
+            )
+        ]
+        if mentioned:
+            regions = data_access.get_regions(mentioned[:3])
+        elif (
+            "earth" in question_normalized
+            and ("visibility" in question_normalized or "elevation" in question_normalized)
+            and any(word in question_normalized for word in ("best", "which", "rank", "compare"))
+        ):
+            regions = [
+                data_access.get_region(name)
+                for name in data_access.list_names(only_scored=True)
+            ]
+
+    selected_date = app_state.get("selected_date", "2027-03-12")
+    try:
+        for region in regions:
+            if region.get("id") == "custom-point":
+                continue
+            if region.get("lat") is None or region.get("lon") is None:
+                continue
+            physical = evaluate_site(region, selected_date)
+            region["score"] = round(physical["scores"]["total"] * 100, 2)
+            region["parameters"] = {
+                "steepness_deg": physical["steepness"]["slope_deg"],
+                "sun_elevation_deg": physical["sun"]["elevation_deg"],
+                "earth_elevation_deg": physical["earth"]["elevation_deg"],
+                "p_no_collision": 1.0 if physical["scores"]["pass"] else 0.0,
+            }
+    except ValueError:
+        pass
 
     computed = None
     if regions:
@@ -137,6 +311,34 @@ def chat(
             computed = precompute(regions)
         except ValueError as e:
             computed = {"mode": None, "warnings": [str(e)]}
+
+    direct_answer = _earth_visibility_answer(question, regions, computed, selected_date)
+    if direct_answer:
+        return {
+            "answer": direct_answer,
+            "computed": computed,
+            "actions": [],
+            "rejected": [],
+            "model": "deterministic-physical-evaluator",
+        }
+    direct_answer = _site_description_answer(question, regions, computed, selected_date)
+    if direct_answer:
+        return {
+            "answer": direct_answer,
+            "computed": computed,
+            "actions": [],
+            "rejected": [],
+            "model": "deterministic-physical-evaluator",
+        }
+    direct_answer = _comparison_answer(question, computed, selected_date)
+    if direct_answer:
+        return {
+            "answer": direct_answer,
+            "computed": computed,
+            "actions": [],
+            "rejected": [],
+            "model": "deterministic-physical-evaluator",
+        }
 
     messages = (
         [{"role": "system", "content": build_system_prompt(
@@ -196,8 +398,9 @@ def chat(
         return result
 
     # Every provider failed: still give the user something useful.
+    fallback_actions = _offline_actions(question, app_state)
     return {"answer": _template_answer(computed) + f"\n\n[{last_error}]", "computed": computed,
-            "actions": [], "rejected": [], "error": True}
+            "actions": fallback_actions, "rejected": [], "error": True}
 
 
 def _call(provider: dict, messages: List[dict]):

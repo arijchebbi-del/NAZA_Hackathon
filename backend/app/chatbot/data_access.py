@@ -71,6 +71,8 @@ def _load_all() -> Dict[str, dict]:
         for path in metrics_dir.glob("*.json"):
             m = _read_json(path)
             rid = str(m.get("id") or path.stem)
+            if rid not in merged:
+                continue
             entry = merged.setdefault(
                 rid,
                 {"id": rid, "name": m.get("name", rid), "type": None, "lat": None,
@@ -78,6 +80,17 @@ def _load_all() -> Dict[str, dict]:
             )
             entry["score"] = m.get("score")
             entry["parameters"] = m.get("parameters", {}) or {}
+    from ..physical import evaluate_site
+    for entry in merged.values():
+        if entry["score"] is None and entry.get("lat") is not None and entry.get("lon") is not None:
+            physical = evaluate_site(entry, "2027-03-12")
+            entry["score"] = round(physical["scores"]["total"] * 100, 2)
+            entry["parameters"] = {
+                "steepness_deg": physical["steepness"]["slope_deg"],
+                "sun_elevation_deg": physical["sun"]["elevation_deg"],
+                "earth_elevation_deg": physical["earth"]["elevation_deg"],
+                "p_no_collision": 1.0 if physical["scores"]["pass"] else 0.0,
+            }
     return merged
 
 

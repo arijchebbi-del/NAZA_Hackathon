@@ -180,8 +180,21 @@ export async function chat(
   history: ChatMessage[],
   level: ChatLevel,
   appState: ChatAppState,
+  regions?: unknown[],
 ): Promise<ChatResponse> {
-  requireMock();
+  if (!USE_MOCK) {
+    if (!API_BASE_URL) throw new Error("Live API is not configured. Set VITE_API_URL in frontend/.env.local.");
+    const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, history, level, appState, regions }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(typeof payload.error === "string" ? payload.error : `API request failed (${response.status}).`);
+    }
+    return payload as ChatResponse;
+  }
   const { mockChat } = await import("./mockChat");
   return mockChat(message, history, level, appState);
 }

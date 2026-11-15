@@ -1,4 +1,4 @@
-export const USE_MOCK = true;
+export const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 export const DATE_MIN = import.meta.env.VITE_DATE_MIN ?? "2026-01-01";
 export const DATE_MAX = import.meta.env.VITE_DATE_MAX ?? "2030-12-31";
