@@ -4,7 +4,8 @@ import { Html, OrbitControls, Stars, useAnimations, useGLTF, useTexture } from "
 import * as THREE from "three";
 import { computeMoonFrame, selenographicToVector, siteLighting, toSceneVectors } from "./lunarMath";
 import NebulaSky from "./NebulaSky";
-import { RegionHighlight, RegionPanel, RegionPicker, RegionPins } from "./MoonRegions";
+import { RegionLabel, RegionPanel, RegionPicker, RegionPins, FreePointMarker, describeFreePoint } from "./MoonRegions";
+import { Marker } from "./markers";
 import { REGIONS } from "./lunarRegions";
 import SatelliteLauncher from "../components/SatelliteLauncher";
 import "./main.css";
@@ -352,6 +353,7 @@ function CameraFocus({ request, bodies }) {
 /* ------------------------------------------------------------------ */
 /*  Landing site markers                                               */
 /* ------------------------------------------------------------------ */
+// ★ Taille fixe : la sélection ne change plus que la couleur (plus de 0.075 -> 0.11, plus de scale 2).
 function SiteMarkers({ selected, onSelect, frame }) {
   return (
     <>
@@ -360,18 +362,12 @@ function SiteMarkers({ selected, onSelect, frame }) {
         const light = siteLighting(frame, site.lat, site.lon);
         return (
           <group key={site.id} position={surfacePosition(site.lat, site.lon)}>
-            <mesh
+            <Marker
+              kind="site"
+              payload={site}
+              color={isSelected ? "#fff2b0" : "#b5ed9c"}
               onClick={(event) => { event.stopPropagation(); onSelect(site); }}
-              onPointerOver={(event) => { event.stopPropagation(); document.body.style.cursor = "pointer"; }}
-              onPointerOut={() => { document.body.style.cursor = "default"; }}
-            >
-              <sphereGeometry args={[isSelected ? 0.11 : 0.075, 20, 20]} />
-              <meshBasicMaterial color={isSelected ? "#fff2b0" : "#b5ed9c"} />
-            </mesh>
-            <mesh scale={isSelected ? 2 : 1.5}>
-              <sphereGeometry args={[0.075, 16, 16]} />
-              <meshBasicMaterial color="#b5ed9c" transparent opacity={0.22} />
-            </mesh>
+            />
             {isSelected && (
               <Html distanceFactor={7} position={[0.14, 0.14, 0]}>
                 <div className="site-tooltip">
@@ -400,7 +396,7 @@ function SimulationScene({ selected, onSelect, frame, simulationDate, playing, s
   const earthBody = useRef();
   const moonRef = useRef();
   const bodies = useMemo(() => ({ sun: sunBody, earth: earthBody }), []);
-  const { hovered, selected: selectedRegion, onHover, onSelect: onRegionSelect, onCursor } = regions;
+  const { hovered, selected: selectedRegion, free, onHover, onSelect: onRegionSelect, onFreePick, onCursor } = regions;
 
   return (
     <>
@@ -415,9 +411,10 @@ function SimulationScene({ selected, onSelect, frame, simulationDate, playing, s
       {ENABLE_MILKY_WAY && <MilkyWay />}
       <Moon ref={moonRef} />
       {SHOW_REGION_PINS && <RegionPins regions={REGIONS} activeId={(hovered ?? selectedRegion)?.id} />}
-      {selectedRegion && <RegionHighlight region={selectedRegion} moonRef={moonRef} selected />}
-      {hovered && hovered.id !== selectedRegion?.id && <RegionHighlight region={hovered} moonRef={moonRef} />}
-      <RegionPicker moonRef={moonRef} onHover={onHover} onSelect={onRegionSelect} onCursor={onCursor} />
+      {selectedRegion && <RegionLabel region={selectedRegion} moonRef={moonRef} selected />}
+      {hovered && hovered.id !== selectedRegion?.id && <RegionLabel region={hovered} moonRef={moonRef} />}
+      {free && <FreePointMarker info={free} moonRef={moonRef} />}
+      <RegionPicker moonRef={moonRef} onHover={onHover} onSelect={onRegionSelect} onFreePick={onFreePick} onCursor={onCursor} />
       <SunBody groupRef={sunBody} playing={playing} />
       <EarthBody groupRef={earthBody} playing={playing} />
       <SiteMarkers selected={selected} onSelect={onSelect} frame={frame} />
@@ -588,6 +585,7 @@ export default function MainSimulation({ onBack }) {
   // Régions lunaires détectées par le Raycaster
   const [hoveredRegion, setHoveredRegion] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState(null);
+  const [freePoint, setFreePoint] = useState(null); // ★ { lat, lon } d'un clic sur une zone sans région
   const cursorRef = useRef(null);
   const handleCursor = useCallback((cursor) => {
     // Mise à jour directe du DOM : évite un re-render React à chaque mouvement de souris.
@@ -596,13 +594,26 @@ export default function MainSimulation({ onBack }) {
       ? `CURSOR ${Math.abs(cursor.lat).toFixed(2)}°${cursor.lat >= 0 ? "N" : "S"} ${Math.abs(cursor.lon).toFixed(2)}°${cursor.lon >= 0 ? "E" : "W"}`
       : "CURSOR —";
   }, []);
-  const regions = useMemo(
-    () => ({ hovered: hoveredRegion, selected: selectedRegion, onHover: setHoveredRegion, onSelect: setSelectedRegion, onCursor: handleCursor }),
-    [hoveredRegion, selectedRegion, handleCursor],
-  );
 
   // Recomputed at ~10 Hz while playing (the 3D bodies themselves move every frame in SimulationDriver).
+  // ★ Doit rester AVANT freeInfo et regions (qui en dépendent).
   const frame = useMemo(() => computeMoonFrame(simulationDate), [simulationDate]);
+
+  // ★ Éclairage + score du point libre, recalculés avec la simulation.
+  const freeInfo = useMemo(() => (freePoint ? describeFreePoint(frame, freePoint) : null), [freePoint, frame]);
+
+  const regions = useMemo(
+    () => ({
+      hovered: hoveredRegion,
+      selected: selectedRegion,
+      free: freeInfo,
+      onHover: setHoveredRegion,
+      onSelect: setSelectedRegion,
+      onFreePick: setFreePoint,
+      onCursor: handleCursor,
+    }),
+    [hoveredRegion, selectedRegion, freeInfo, handleCursor],
+  );
 
   return (
     <div className="main-simulation">
@@ -617,7 +628,10 @@ export default function MainSimulation({ onBack }) {
           </Canvas>
         </Suspense>
       </div>
-      <RegionPanel hovered={hoveredRegion} selected={selectedRegion} cursorRef={cursorRef} onClear={() => setSelectedRegion(null)} />
+      <RegionPanel
+        hovered={hoveredRegion} selected={selectedRegion} free={freeInfo} cursorRef={cursorRef}
+        onClear={() => { setSelectedRegion(null); setFreePoint(null); }}
+      />
       <GuideAstronaut selected={selected} frame={frame} />
       <TimeControl
         date={simulationDate} frame={frame} playing={playing} speed={speed}
